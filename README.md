@@ -17,11 +17,11 @@ As of 6/12/2023, this workflow was developed on Nextflow version 22.10.6.
 You will want an NCBI API Key if you plan on running a lot of jobs at once: https://ncbiinsights.ncbi.nlm.nih.gov/2017/11/02/new-api-keys-for-the-e-utilities/
 
 ## Overview
-READMETRICS: Calculates read metrics using CG-Pipeline
-COVERAGECUTOFF: Calculates minimum coverage cut-off based on read metrics
-ASSEMBLE: Assembles reads using Shovill
-ARANDPLASMIDSCREEN: Screens for resistance determinants, plasmid replicons, and point mutations using resfinder, plasmidfinder, and pointfinder databases respectively using Staramr
-MUTATIONAL: Screens for additional point mutations for some genus/species combinations using Ariba
+READMETRICS: Calculates read metrics using CG-Pipeline  
+COVERAGECUTOFF: Calculates minimum coverage cut-off based on read metrics  
+ASSEMBLE: Assembles reads using Shovill  
+ARANDPLASMIDSCREEN: Screens for resistance determinants, plasmid replicons, and point mutations using resfinder, plasmidfinder, and pointfinder databases respectively using Staramr  
+MUTATIONAL: Screens for additional point mutations for some genus/species combinations using Ariba  
 
 ## Parameters
 Parameters for each process can be changed in `geteilt.config` under the first bracketed section `params`. Check out Check out [Resources](#resources) for links to each process's main github page to learn more about process-specific parameters.
