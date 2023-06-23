@@ -125,18 +125,15 @@ process ASSEMBLE {
 	
 	script:
 	def value = covcutoff.toFloat()
+	def mincov = min_coverage / 10
 	
-	if (value >= 10)
+	if (value >= mincov)
 		"""
-	shovill --outdir "shovill" --R1 ${read1} --R2 ${read2} --mincov 10 --trim --namefmt ${wgs_id}_contig%05d
+	shovill --outdir "shovill" --R1 ${read1} --R2 ${read2} --mincov ${min_coverage} --trim --namefmt ${wgs_id}_contig%05d --depth 100
 		"""
-	else if (value < 10 && value >= 3)
+	else if (value < mincov)
 		"""
-	shovill --outdir "shovill" --R1 ${read1} --R2 ${read2} --mincov ${value} --trim --namefmt ${wgs_id}_contig%05d
-		"""
-	else if (value < 3)
-		"""
-	echo "${wgs_id}	${value}" > lowCoverageIsolates.tsv
+	printf "${wgs_id}\tNARMSWF5.0" > lowCoverageIsolates.tsv
 		"""
 }
 
