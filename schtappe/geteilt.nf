@@ -208,6 +208,54 @@ process ARANDPLASMIDSCREEN {
 		"""
 }
 
+process AMRFINDER {
+	tag "AMRFinderPlus on ${wgs_id}"
+	publishDir (
+		path: "${params.outdir}/${wgs_id}/amrfinderplus/",
+		mode: 'copy',
+		saveAs: { filename ->
+					if (filename.matches("mutational.tsv")) "$filename"
+					else if(filename.matches("${wgs_id}.amrfinder.fasta")) "$filename"
+					else if(filename.matches("${wgs_id}.flank5.fasta")) "$filename"
+					else if(filename.matches("amrfinder.tsv")) "$filename"
+					else null
+		}
+	)
+	errorStrategy = 'ignore'
+	
+	input:
+	tuple val(srr_id), path(read1), path(read2), val(wgs_id), val(genome_size), val(min_coverage), val(genus), val(species), val(covcutoff), path(shovill_contigs)
+	
+	output:
+	tuple val(srr_id), path(read1), path(read2), val(wgs_id), val(genome_size), val(min_coverage), val(genus), val(species), val(covcutoff), path(shovill_contigs), path("mutational.tsv"), path("${wgs_id}.amrfinder.fasta"), path("${wgs_id}.flank5.fasta"), path("amrfinder.tsv")
+	
+	script:
+	if (genus == 'Salmonella')
+		"""
+		amrfinder --nucleotide ${shovill_contigs} --organism Salmonella --mutation_all "mutational.tsv" --name ${wgs_id} --nucleotide_output "${wgs_id}.amrfinder.fasta" --nucleotide_flank5_output "${wgs_id}.flank5.fasta" --nucleotide_flank5_size 100 --ident_min -1 -o "amrfinder.tsv"
+		"""
+	else if (genus == 'Escherichia')
+		"""
+		amrfinder --nucleotide ${shovill_contigs} --organism Escherichia --mutation_all "mutational.tsv" --name ${wgs_id} --nucleotide_output "${wgs_id}.amrfinder.fasta" --nucleotide_flank5_output "${wgs_id}.flank5.fasta" --nucleotide_flank5_size 100 --ident_min -1 -o "amrfinder.tsv"
+		"""
+	else if (genus == 'Shigella')
+		"""
+		amrfinder --nucleotide ${shovill_contigs} --organism Escherichia --mutation_all "mutational.tsv" --name ${wgs_id} --nucleotide_output "${wgs_id}.amrfinder.fasta" --nucleotide_flank5_output "${wgs_id}.flank5.fasta" --nucleotide_flank5_size 100 --ident_min -1 -o "amrfinder.tsv"
+		"""
+	else if (genus == 'Campylobacter')
+		"""
+		amrfinder --nucleotide ${shovill_contigs} --organism Campylobacter --mutation_all "mutational.tsv" --name ${wgs_id} --nucleotide_output "${wgs_id}.amrfinder.fasta" --nucleotide_flank5_output "${wgs_id}.flank5.fasta" --nucleotide_flank5_size 100 --ident_min -1 -o "amrfinder.tsv"
+		"""
+	else if (genus == 'Vibrio' && species == 'cholerae')
+		"""
+		amrfinder --nucleotide ${shovill_contigs} --organism Vibrio_cholerae --mutation_all "mutational.tsv" --name ${wgs_id} --nucleotide_output "${wgs_id}.amrfinder.fasta" --nucleotide_flank5_output "${wgs_id}.flank5.fasta" --nucleotide_flank5_size 100 --ident_min -1 -o "amrfinder.tsv"
+		"""
+	else
+		"""
+		amrfinder --nucleotide ${shovill_contigs} --mutation_all "mutational.tsv" --name ${wgs_id} --nucleotide_output "${wgs_id}.amrfinder.fasta" --nucleotide_flank5_output "${wgs_id}.flank5.fasta" --nucleotide_flank5_size 100 --ident_min -1 -o "amrfinder.tsv"
+		"""
+}
+
 process MUTATIONAL {
 	tag "Ariba on ${wgs_id}"
 	publishDir (
@@ -281,13 +329,27 @@ process MUTATIONAL {
 WORKFLOW
 */
 workflow {
+	if (params.local_reads) {
+		Channel
+			.fromPath(params.import_sheet, checkIfExists:true)
+			.splitCsv(sep: '\t', header:true, strip:true)
+			.map{ row -> tuple(row.Read, row.WGS, row.Genus, row.Species) }
+			.view()
+			.set{import_ch}
+		Channel
+			.fromFilePairs(params.reads, flat:true, checkIfExists:true)
+			.join(import_ch, by: 0)
+			.view()
+			.set{reads_ch}
+	}
+	else {
 	accessions = fetchRunAccessions(params.import_sheet)
 	//println accessions
 	
 	Channel
-		.fromPath(params.import_sheet)
+		.fromPath(params.import_sheet, checkIfExists:true)
 		.splitCsv(sep: '\t', header:true, strip:true)
-		.map{row -> tuple(row.SRR, row.WGS, row.Genus, row.Species)}
+		.map{ row -> tuple(row.SRR, row.WGS, row.Genus, row.Species) }
 		//.view()
 		.set{import_ch}
 
@@ -307,6 +369,7 @@ workflow {
 		.join(import_ch, by: 0)
 		//.view()
 		.set{reads_ch}
+	}
 
 	readmetrics_ch = READMETRICS(reads_ch)
 		.map{ outTuple -> outTuple[0,1,2,3,4,5,6,7,8] }
@@ -317,9 +380,16 @@ workflow {
 	shovill_ch = ASSEMBLE(coveragecutoff_ch)
 		.map{ outTuple -> outTuple[0,1,2,3,4,5,6,7,8,9] }
 		//.view()
-	staramr_ch = ARANDPLASMIDSCREEN(shovill_ch)
+	if (params.amrfinder) {
+		staramr_ch = AMRFINDER(shovill_ch)
 		.map{ outTuple -> outTuple[0,1,2,3,4,5,6,7,8,9] }
 		//.view()
+	}
+	else {
+	staramr_ch = ARANDPLASMIDSCREEN(shovill_ch)
+		.map{ outTuple -> outTuple[0,1,2,3,4,5,6,7,8,9] }
+		//.view()		
+	}
 	pointmutation_ch = MUTATIONAL(staramr_ch)
 		.map{ outTuple -> outTuple[0,1,2,3,4,5,6,7,8,9] }
 		//.view()
