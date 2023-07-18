@@ -98,7 +98,7 @@ process COVERAGECUTOFF {
 	
 	script:
 	"""
-	cat ${readmetrics} | awk 'BEGIN { FS = "\\t"} {if (\$1 != "File"){print \$1, \$9/10}}' | sed -e 's/_[1,2].fastq.gz//'| awk '{a[\$1] += \$2} END{for (i in a) print i, a[i]}' | awk '{print \$2}'
+	cat ${readmetrics} | awk 'BEGIN { FS = "\\t"} {if (\$1 != "File"){print \$1, \$9/10}}' | sed -e "s/${params.cov_readformat}//" | awk '{a[\$1] += \$2} END{for (i in a) print i, a[i]}' | awk '{print \$2}'
 	"""
 	
 }
@@ -334,12 +334,12 @@ workflow {
 			.fromPath(params.import_sheet, checkIfExists:true)
 			.splitCsv(sep: '\t', header:true, strip:true)
 			.map{ row -> tuple(row.Read, row.WGS, row.Genus, row.Species) }
-			.view()
+			//.view()
 			.set{import_ch}
 		Channel
 			.fromFilePairs(params.reads, flat:true, checkIfExists:true)
 			.join(import_ch, by: 0)
-			.view()
+			//.view()
 			.set{reads_ch}
 	}
 	else {
