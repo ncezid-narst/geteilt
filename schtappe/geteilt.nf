@@ -232,27 +232,27 @@ process AMRFINDER {
 	script:
 	if (genus == 'Salmonella')
 		"""
-		amrfinder --nucleotide ${shovill_contigs} --organism Salmonella --mutation_all "mutational.tsv" --name ${wgs_id} --nucleotide_output "${wgs_id}.amrfinder.fasta" --nucleotide_flank5_output "${wgs_id}.flank5.fasta" --nucleotide_flank5_size 100 --ident_min -1 -o "amrfinder.tsv"
+		amrfinder --nucleotide ${shovill_contigs} --organism Salmonella  --name ${wgs_id} --ident_min -1 -o "amrfinder.tsv"
 		"""
 	else if (genus == 'Escherichia')
 		"""
-		amrfinder --nucleotide ${shovill_contigs} --organism Escherichia --mutation_all "mutational.tsv" --name ${wgs_id} --nucleotide_output "${wgs_id}.amrfinder.fasta" --nucleotide_flank5_output "${wgs_id}.flank5.fasta" --nucleotide_flank5_size 100 --ident_min -1 -o "amrfinder.tsv"
+		amrfinder --nucleotide ${shovill_contigs} --organism Escherichia --name ${wgs_id} --ident_min -1 -o "amrfinder.tsv"
 		"""
 	else if (genus == 'Shigella')
 		"""
-		amrfinder --nucleotide ${shovill_contigs} --organism Escherichia --mutation_all "mutational.tsv" --name ${wgs_id} --nucleotide_output "${wgs_id}.amrfinder.fasta" --nucleotide_flank5_output "${wgs_id}.flank5.fasta" --nucleotide_flank5_size 100 --ident_min -1 -o "amrfinder.tsv"
+		amrfinder --nucleotide ${shovill_contigs} --organism Escherichia --name ${wgs_id} --ident_min -1 -o "amrfinder.tsv"
 		"""
 	else if (genus == 'Campylobacter')
 		"""
-		amrfinder --nucleotide ${shovill_contigs} --organism Campylobacter --mutation_all "mutational.tsv" --name ${wgs_id} --nucleotide_output "${wgs_id}.amrfinder.fasta" --nucleotide_flank5_output "${wgs_id}.flank5.fasta" --nucleotide_flank5_size 100 --ident_min -1 -o "amrfinder.tsv"
+		amrfinder --nucleotide ${shovill_contigs} --organism Campylobacter --name ${wgs_id} --ident_min -1 -o "amrfinder.tsv"
 		"""
 	else if (genus == 'Vibrio' && species == 'cholerae')
 		"""
-		amrfinder --nucleotide ${shovill_contigs} --organism Vibrio_cholerae --mutation_all "mutational.tsv" --name ${wgs_id} --nucleotide_output "${wgs_id}.amrfinder.fasta" --nucleotide_flank5_output "${wgs_id}.flank5.fasta" --nucleotide_flank5_size 100 --ident_min -1 -o "amrfinder.tsv"
+		amrfinder --nucleotide ${shovill_contigs} --name ${wgs_id} --ident_min -1 -o "amrfinder.tsv"
 		"""
 	else
 		"""
-		amrfinder --nucleotide ${shovill_contigs} --mutation_all "mutational.tsv" --name ${wgs_id} --nucleotide_output "${wgs_id}.amrfinder.fasta" --nucleotide_flank5_output "${wgs_id}.flank5.fasta" --nucleotide_flank5_size 100 --ident_min -1 -o "amrfinder.tsv"
+		amrfinder --nucleotide ${shovill_contigs} --name ${wgs_id} --ident_min -1 -o "amrfinder.tsv"
 		"""
 }
 
