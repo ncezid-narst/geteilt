@@ -394,3 +394,7 @@ workflow {
 		.map{ outTuple -> outTuple[0,1,2,3,4,5,6,7,8,9] }
 		//.view()
 }
+
+workflow.onComplete{
+	println "\nPLEASE REMEMBER TO CLEAN UP YOUR WORK DIRECTORY ONCE FINISHED. DATA STORAGE IS LIMITED!\n"
+}
