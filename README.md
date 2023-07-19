@@ -1,5 +1,16 @@
 # geteilt
-NARST workflow built in nextflow. Pulls paired short-read data from NCBI using SRRs, and runs through read metrics, coverage cutoff, assembly, and AR, plasmid, and point-mutation screening
+NARST workflow built in nextflow. Pulls paired short-read data from NCBI using SRRs or finds local reads, and runs through read metrics, coverage cutoff, assembly, and AR, plasmid, and point-mutation screening.
+
+Please note that both the ARANDPLASMIDSCREEN and MUTATIONAL processes use custom databases only available to CDC users. If you are an external user, you should configure the workflow to run AMRFinderPlus instead of staramr. See [Parameters](#parameters) section for detailed instructions.
+
+## Updates
+7/19/2023:  
+* Option added for running workflow on local reads
+* Option added for running NCBI's AMRFinderPlus instead of staramr
+* ARANDPLASMIDSCREEN
+	* Staramr updates databases to specific resfinder, pointfinder, and plasmidfinder commits
+* COVERAGECUTOFF
+	* Parameter added to account for variable read file naming formats
 
 ## Install
 Navigate to your home directory and git clone the repository.
@@ -14,13 +25,14 @@ If you're working on CDC servers, run `module load nextflow/XX.XX.X` to load Nex
 
 As of 6/12/2023, this workflow was developed on Nextflow version 22.10.6.
 
-You will want an NCBI API Key if you plan on running a lot of jobs at once: https://ncbiinsights.ncbi.nlm.nih.gov/2017/11/02/new-api-keys-for-the-e-utilities/
+You will want an NCBI API Key: https://ncbiinsights.ncbi.nlm.nih.gov/2017/11/02/new-api-keys-for-the-e-utilities/
 
 ## Overview
 READMETRICS: Calculates read metrics using CG-Pipeline  
 COVERAGECUTOFF: Calculates minimum coverage cut-off based on read metrics  
 ASSEMBLE: Assembles reads using Shovill  
 ARANDPLASMIDSCREEN: Screens for resistance determinants, plasmid replicons, and point mutations using resfinder, plasmidfinder, and pointfinder databases respectively using Staramr  
+AMRFINDER: Screens for resistance determinants, plasmid replicons, and point mutations using NCBI's AMRFinderPlus  
 MUTATIONAL: Screens for additional point mutations for some genus/species combinations using Ariba  
 
 ## Parameters
@@ -31,8 +43,11 @@ Prior to running geteilt, make sure the INITIAL PARAMETERS are set accurately:
 	import_sheet = 'import.txt'
 	ncbi_api_key = ''
 	outdir = 'geteilt'
+	local_reads = false
+	reads = '' //reads/*_{1,2}.fastq.gz //reads/*_L001_R{1,2}_001.fastq.gz
+	amrfinder = false
 ```
-`import_sheet`: Tab-delimited text file wtih sample information. For exmaple:
+`import_sheet`: Tab-delimited text file wtih sample information. When pulling reads from NCBI, format should be as follows:
 ```bash
 SRR     WGS     Genus   Species
 SRR1910447      2013AY-0074     Campylobacter   coli
@@ -48,9 +63,25 @@ SRR14250202     PNUSAY000051    Yersinia        enterocolitica
 * Genus: Sample genus
 * Species: Sample species
 
-`ncbi_api_key`: NCBI API Key to increase level of bandwidth/access when pulling reads. Necessary unless you'd like to edit the script directly in `geteilt.nf` under `Workflow`
-
-`outdir`: Name of geteilt output directory. Default name is set to `geteilt`.
+When running the workflow using local reads, format should be as follows:
+```bash
+Read    WGS     Genus   Species
+2013K-1828-M3235-22-039_S7      2013K-1828      Salmonella      enterica
+2014C-3598-M347-22-044_S2       2014C-3598      Escherichia     coli
+2014C-3599-M347-22-044_S3       2014C-3599      Escherichia     coli
+2014C-3857-M347-23-003_S14      2014C-3857      Escherichia     coli
+2014C-3946-M3235-17-036_S9      2014C-3946      Escherichia     coli
+```
+* Read: Name of read file. This name must match the filename of the read **minus** the string denoted under the `reads` parameter. For example, if the full name of the read file is `2013K-1828-M3235-22-039_S7_L001_R1_001.fastq.gz` and `reads = 'reads/*_L001_R{1,2}_001.fastq.gz'`, then the value under Read must be `2013K-1828-M3235-22-039_S7`.
+* WGS: Sample ID (will be final name of sample)
+* Genus: Sample genus
+* Species: Sample species
+ 
+`ncbi_api_key`: NCBI API Key to increase level of bandwidth/access when pulling reads. Necessary unless you'd like to edit the script directly in `geteilt.nf` under `Workflow` to not use an API key.  
+`outdir`: Name of geteilt output directory. Default name is set to `geteilt`.  
+`local_reads`: When `true`, the workflow will look for local reads using the `reads` parameter value. Default value is set to `false`.  
+`reads`: Path to local directory with paired-end reads. May have to create custom string pattern depending on format of reads. Two possible formats are provided.  
+`amrfinder`: When `true`, the workflow will run NCBI's AMRFinderPlus instead of staramr.  
 
 ## Processes
 Directives for each process can be changed in `geteilt.config` under the second bracketed section `process`. This is where you can update the containers used in the processes that use one. Check out [Resources](#resources) to see a full list of all the containers and the tools' githubs.
@@ -109,6 +140,8 @@ geteilt/
 │   └── staramr
 │       └── hits
 ```
+Note: The `staramr` directory will be replaced by `amrfinder` when running NCBI's AMRFinderPlus over staramr.
+
 ## Resources
 ### Containers:
 * LYVE-SET (CG-Pipeline):
@@ -120,6 +153,9 @@ geteilt/
 * Staramr:
   * https://hub.docker.com/r/staphb/staramr
   * https://github.com/phac-nml/staramr
+* AMRFinderPlus:
+  *  https://hub.docker.com/r/ncbi/amr
+  *  https://github.com/ncbi/amr
 * Ariba:
   * https://hub.docker.com/r/staphb/ariba
   * https://github.com/sanger-pathogens/ariba
