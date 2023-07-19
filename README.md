@@ -5,6 +5,7 @@ Please note that both the ARANDPLASMIDSCREEN and MUTATIONAL processes use custom
 
 ## Updates
 7/19/2023:  
+* Added bash script to create import sheets under scripts ⚠️Only for CDC users generating import sheets for NARMS database⚠️
 * Option added for running workflow on local reads
 * Option added for running NCBI's AMRFinderPlus instead of staramr
 * ARANDPLASMIDSCREEN
